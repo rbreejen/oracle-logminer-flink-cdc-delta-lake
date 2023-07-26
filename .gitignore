@@ -1,0 +1,9 @@
+oradata/
+.idea/
+.vscode/
+delta-flink-bundle/target
+*.jar
+.DS_Store
+**/dependency-reduced-pom.xml
+*.iml
+flink_datastream_demo/target/

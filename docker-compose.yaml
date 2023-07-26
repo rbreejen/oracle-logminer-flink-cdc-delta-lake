@@ -1,0 +1,88 @@
+version: "2.2"
+services:
+  jobmanager:
+    image: flink:1.16.1-scala_2.12-java11
+    ports:
+      - "8081:8081"
+    command: jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        env.hadoop.conf.dir: /opt/hadoop/conf
+      - FLINK_ENV_JAVA_OPTS=-Dlog.file=/opt/flink/log/jobmanager.log
+    volumes:
+      - ./jars/delta-flink1.16-bundle-1.0.jar:/opt/flink/lib/delta-flink1.16-bundle-1.0.jar
+      - ./jars/flink-s3-fs-hadoop-1.16.1.jar:/opt/flink/lib/flink-s3-fs-hadoop-1.16.1.jar
+      - ./jars/hudi-flink1.16-bundle-0.13.1.jar:/opt/flink/lib/hudi-flink1.16-bundle-0.13.1.jar
+      - ./conf/log4j-console.properties:/opt/flink/conf/log4j-console.properties
+      - ./conf/core-site.xml:/opt/hadoop/conf/core-site.xml
+      - ./conf/hudi-default.conf:/etc/hudi/conf/hudi-default.conf      
+  taskmanager:
+    image: flink:1.16.1-scala_2.12-java11
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    scale: 1
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 30
+        env.hadoop.conf.dir: /opt/hadoop/conf
+      - FLINK_ENV_JAVA_OPTS=-Dlog.file=/opt/flink/log/taskmanager.log
+    volumes:
+      - ./jars/delta-flink1.16-bundle-1.0.jar:/opt/flink/lib/delta-flink1.16-bundle-1.0.jar
+      - ./jars/flink-s3-fs-hadoop-1.16.1.jar:/opt/flink/lib/flink-s3-fs-hadoop-1.16.1.jar
+      - ./jars/hudi-flink1.16-bundle-0.13.1.jar:/opt/flink/lib/hudi-flink1.16-bundle-0.13.1.jar      
+      - ./conf/log4j-console.properties:/opt/flink/conf/log4j-console.properties
+      - ./conf/core-site.xml:/opt/hadoop/conf/core-site.xml
+      - ./conf/hudi-default.conf:/etc/hudi/conf/hudi-default.conf
+  sql-client:
+    image: flink:1.16.1-scala_2.12-java11
+    command: bin/sql-client.sh -i /flink-sql-scripts/flink-sql-init.sql
+    depends_on:
+      - jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        rest.address: jobmanager
+        env.hadoop.conf.dir: /opt/hadoop/conf
+      - FLINK_ENV_JAVA_OPTS=-Dlog.file=/opt/flink/log/sql-client.log
+    volumes:
+      - ./jars/delta-flink1.16-bundle-1.0.jar:/opt/flink/lib/delta-flink1.16-bundle-1.0.jar
+      - ./jars/flink-s3-fs-hadoop-1.16.1.jar:/opt/flink/lib/flink-s3-fs-hadoop-1.16.1.jar
+      - ./jars/hudi-flink1.16-bundle-0.13.1.jar:/opt/flink/lib/hudi-flink1.16-bundle-0.13.1.jar
+      - ./conf/log4j-cli.properties:/opt/flink/conf/log4j-cli.properties
+      - ./conf/core-site.xml:/opt/hadoop/conf/core-site.xml
+      - ./conf/hudi-default.conf:/etc/hudi/conf/hudi-default.conf
+      - ./flink-sql-scripts:/flink-sql-scripts
+
+  minio:
+    image: minio/minio
+    command: server --console-address ":9001" /data
+    ports:
+      - '9000:9000'
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    volumes:
+      - s3_data:/data
+  # This service just makes sure a bucket with the right policies is created
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      /usr/bin/mc config host add minio http://minio:9000 minio minio123;
+      /usr/bin/mc mb minio/lakehouse;
+      /usr/bin/mc anonymous set public minio/lakehouse/public;
+      exit 0;
+      "
+
+volumes:
+  s3_data:
