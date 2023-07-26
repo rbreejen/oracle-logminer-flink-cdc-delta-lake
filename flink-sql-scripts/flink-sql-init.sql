@@ -28,6 +28,41 @@ CREATE TABLE hudi_datagen_data (
       'table.type' = 'MERGE_ON_READ' --  MERGE_ON_READ table or, by default is COPY_ON_WRITE
 );
 
+CREATE TABLE t_shipments_source (
+    shipment_id INT NOT NULL,
+    order_id INT,
+    origin STRING,
+    destination STRING,
+    is_arrived BOOLEAN,
+    PRIMARY KEY (shipment_id) NOT ENFORCED
+  ) WITH (
+    'connector' = 'postgres-cdc',
+    'hostname' = 'postgres',
+    'port' = '5432',
+    'username' = 'postgres',
+    'password' = 'postgres',
+    'database-name' = 'postgres',
+    'schema-name' = 'public',
+    'table-name' = 'shipments',
+    'slot.name' = 'flink',
+    'scan.incremental.snapshot.enabled' = 'true'
+  );
+
+CREATE TABLE t_shipments_target (
+    shipment_id INT,
+    order_id INT,
+    origin STRING,
+    destination STRING,
+    is_arrived BOOLEAN,
+    PRIMARY KEY (shipment_id) NOT ENFORCED
+  )
+  WITH (
+      'connector' = 'hudi',
+      'write.tasks' = '4',
+      'path' = 's3a://lakehouse/postgres/hudi',
+      'table.type' = 'MERGE_ON_READ' --  MERGE_ON_READ table or, by default is COPY_ON_WRITE
+);
+
 CREATE CATALOG delta_catalog WITH (
   'type' = 'delta-catalog',
   'catalog-type' = 'in-memory'
@@ -43,4 +78,16 @@ CREATE TABLE delta_datagen_data (
 ) WITH (
   'connector' = 'delta',
   'table-path' = 's3a://lakehouse/datagen/delta'
+);
+
+CREATE TABLE t_shipments_target (
+    shipment_id INT,
+    order_id INT,
+    origin STRING,
+    destination STRING,
+    is_arrived BOOLEAN,
+    PRIMARY KEY (shipment_id) NOT ENFORCED
+) WITH (
+  'connector' = 'delta',
+  'table-path' = 's3a://lakehouse/postgres/delta'
 );
