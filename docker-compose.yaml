@@ -12,6 +12,7 @@ services:
         env.hadoop.conf.dir: /opt/hadoop/conf
       - FLINK_ENV_JAVA_OPTS=-Dlog.file=/opt/flink/log/jobmanager.log
     volumes:
+      - ./jars/flink-sql-connector-oracle-cdc-2.5-SNAPSHOT.jar:/opt/flink/lib/flink-sql-connector-oracle-cdc-2.5-SNAPSHOT.jar
       - ./jars/delta-flink1.16-bundle-1.0.jar:/opt/flink/lib/delta-flink1.16-bundle-1.0.jar
       - ./jars/flink-s3-fs-hadoop-1.16.1.jar:/opt/flink/lib/flink-s3-fs-hadoop-1.16.1.jar
       - ./jars/hudi-flink1.16-bundle-0.13.1.jar:/opt/flink/lib/hudi-flink1.16-bundle-0.13.1.jar
@@ -32,9 +33,10 @@ services:
         env.hadoop.conf.dir: /opt/hadoop/conf
       - FLINK_ENV_JAVA_OPTS=-Dlog.file=/opt/flink/log/taskmanager.log
     volumes:
+      - ./jars/flink-sql-connector-oracle-cdc-2.5-SNAPSHOT.jar:/opt/flink/lib/flink-sql-connector-oracle-cdc-2.5-SNAPSHOT.jar
       - ./jars/delta-flink1.16-bundle-1.0.jar:/opt/flink/lib/delta-flink1.16-bundle-1.0.jar
       - ./jars/flink-s3-fs-hadoop-1.16.1.jar:/opt/flink/lib/flink-s3-fs-hadoop-1.16.1.jar
-      - ./jars/hudi-flink1.16-bundle-0.13.1.jar:/opt/flink/lib/hudi-flink1.16-bundle-0.13.1.jar      
+      - ./jars/hudi-flink1.16-bundle-0.13.1.jar:/opt/flink/lib/hudi-flink1.16-bundle-0.13.1.jar
       - ./conf/log4j-console.properties:/opt/flink/conf/log4j-console.properties
       - ./conf/core-site.xml:/opt/hadoop/conf/core-site.xml
       - ./conf/hudi-default.conf:/etc/hudi/conf/hudi-default.conf
@@ -51,6 +53,7 @@ services:
         env.hadoop.conf.dir: /opt/hadoop/conf
       - FLINK_ENV_JAVA_OPTS=-Dlog.file=/opt/flink/log/sql-client.log
     volumes:
+      - ./jars/flink-sql-connector-oracle-cdc-2.5-SNAPSHOT.jar:/opt/flink/lib/flink-sql-connector-oracle-cdc-2.5-SNAPSHOT.jar
       - ./jars/delta-flink1.16-bundle-1.0.jar:/opt/flink/lib/delta-flink1.16-bundle-1.0.jar
       - ./jars/flink-s3-fs-hadoop-1.16.1.jar:/opt/flink/lib/flink-s3-fs-hadoop-1.16.1.jar
       - ./jars/hudi-flink1.16-bundle-0.13.1.jar:/opt/flink/lib/hudi-flink1.16-bundle-0.13.1.jar
